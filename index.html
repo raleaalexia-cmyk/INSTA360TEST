@@ -9,7 +9,7 @@
 </style>
 </head>
 <body>
-<canvas id="c"></canvas><div id="error"></div><div id="points"><button class="point" id="center" hidden><i></i>Central workspace</button><button class="point" id="left" hidden><i></i>Left workstation</button><button class="point" id="right" hidden><i></i>Right workstation</button></div>
+<canvas id="c"></canvas><div id="error"></div><div id="points"><button class="point" id="raoul" hidden><i></i>Raoul</button><button class="point" id="alexia" hidden><i></i>Alexia</button><button class="point" id="patrick" hidden><i></i>Patrick</button><button class="point" id="ionpro" hidden><i></i>ION PRO</button></div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
 (()=>{
@@ -23,14 +23,14 @@ let lon=0,lat=0,fov=75,drag=false,x0=0,y0=0,loaded=false;
 const tex=new THREE.TextureLoader().load('./Image%20(30).jpg',t=>{t.colorSpace=THREE.SRGBColorSpace;mat.map=t;mat.needsUpdate=true;loaded=true;document.querySelectorAll('.point').forEach(e=>e.hidden=false);},undefined,()=>{err.style.display='grid';err.textContent='The image file could not be loaded. Confirm that Image (30).jpg is in the repository root.';});
 function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
 function aim(){lat=Math.max(-80,Math.min(80,lat));camera.fov=fov;camera.updateProjectionMatrix();camera.rotation.order='YXZ';camera.rotation.y=THREE.MathUtils.degToRad(lon);camera.rotation.x=THREE.MathUtils.degToRad(lat);}
-const points=[['center',0,0],['left',-45,-8],['right',45,-8]];
+const points=[['raoul',0,0],['alexia',-78,-3],['patrick',78,-5],['ionpro',0,-28]];
 function place(){if(!loaded)return;for(const [id,l,a] of points){const el=document.getElementById(id);const v=new THREE.Vector3(-Math.sin(THREE.MathUtils.degToRad(l))*Math.cos(THREE.MathUtils.degToRad(a)),Math.sin(THREE.MathUtils.degToRad(a)),-Math.cos(THREE.MathUtils.degToRad(l))*Math.cos(THREE.MathUtils.degToRad(a)));v.applyQuaternion(camera.quaternion);if(v.z>=0){el.hidden=true;continue;}el.hidden=false;el.style.left=((v.x/-v.z*.5+.5)*innerWidth)+'px';el.style.top=((-v.y/-v.z*.5+.5)*innerHeight)+'px';}}
 function frame(){requestAnimationFrame(frame);aim();renderer.render(scene,camera);place();}
 canvas.addEventListener('pointerdown',e=>{drag=true;x0=e.clientX;y0=e.clientY;canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointermove',e=>{if(!drag)return;lon+=(e.clientX-x0)*.12;lat+=(e.clientY-y0)*.12;x0=e.clientX;y0=e.clientY;});
 canvas.addEventListener('pointerup',()=>drag=false);canvas.addEventListener('pointercancel',()=>drag=false);
 canvas.addEventListener('wheel',e=>{e.preventDefault();fov=Math.max(35,Math.min(95,fov+e.deltaY*.04));},{passive:false});
-document.getElementById('center').onclick=()=>{lon=0;lat=0;};document.getElementById('left').onclick=()=>{lon=-45;lat=-8;};document.getElementById('right').onclick=()=>{lon=45;lat=-8;};
+document.getElementById('raoul').onclick=()=>{lon=0;lat=0;};document.getElementById('alexia').onclick=()=>{lon=-78;lat=-3;};document.getElementById('patrick').onclick=()=>{lon=78;lat=-5;};document.getElementById('ionpro').onclick=()=>{lon=0;lat=-28;};
 addEventListener('resize',resize);resize();frame();
 })();
 </script>
