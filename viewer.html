@@ -48,15 +48,17 @@ const locations=[
  {id:'ionpro',lon:0,lat:-30}
 ];
 function updatePins(){
- const radius=490;
+ camera.updateMatrixWorld(true);
  for(const p of locations){
   const lo=THREE.MathUtils.degToRad(p.lon),la=THREE.MathUtils.degToRad(p.lat);
-  const world=new THREE.Vector3(-Math.sin(lo)*Math.cos(la),Math.sin(la),-Math.cos(lo)*Math.cos(la)).multiplyScalar(radius);
-  const projected=world.project(camera);
+  const world=new THREE.Vector3(-Math.sin(lo)*Math.cos(la),Math.sin(la),-Math.cos(lo)*Math.cos(la)).multiplyScalar(490);
+  const view=world.clone().applyMatrix4(camera.matrixWorldInverse);
   const el=document.getElementById(p.id);
-  const visible=projected.z<1 && projected.z>-1 && projected.x>=-1.2 && projected.x<=1.2 && projected.y>=-1.2 && projected.y<=1.2 && world.clone().sub(camera.position).dot(new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion))>0;
+  if(view.z>=0){el.style.display='none';continue;}
+  const projected=world.clone().project(camera);
+  const visible=projected.z>=-1 && projected.z<=1 && projected.x>=-1 && projected.x<=1 && projected.y>=-1 && projected.y<=1;
   el.style.display=visible?'flex':'none';
-  if(visible){el.style.left=((projected.x+1)*.5*innerWidth)+'px';el.style.top=((1-projected.y)*.5*innerHeight)+'px';}
+  if(visible){el.style.left=((projected.x+1)*0.5*innerWidth)+'px';el.style.top=((1-projected.y)*0.5*innerHeight)+'px';}
  }
 }
 function render(){requestAnimationFrame(render);updateCamera();renderer.render(scene,camera);updatePins();}
