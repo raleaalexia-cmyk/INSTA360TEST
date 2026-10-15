@@ -23,7 +23,7 @@ let lon=0,lat=0,fov=75,drag=false,x0=0,y0=0,loaded=false;
 const tex=new THREE.TextureLoader().load('./Image%20(30).jpg',t=>{t.colorSpace=THREE.SRGBColorSpace;mat.map=t;mat.needsUpdate=true;loaded=true;document.querySelectorAll('.point').forEach(e=>e.hidden=false);},undefined,()=>{err.style.display='grid';err.textContent='The image file could not be loaded. Confirm that Image (30).jpg is in the repository root.';});
 function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
 function aim(){lat=Math.max(-80,Math.min(80,lat));camera.fov=fov;camera.updateProjectionMatrix();camera.rotation.order='YXZ';camera.rotation.y=THREE.MathUtils.degToRad(lon);camera.rotation.x=THREE.MathUtils.degToRad(lat);}
-const points=[['alexia',-65,-4],['patrick',65,-4],['raoul',0,-2],['ionpro',0,-30]];
+// Scene-anchored spherical coordinates (longitude, latitude). Adjust these to the exact subjects in the panorama.\nconst points=[['alexia',-65,-4],['patrick',65,-4],['raoul',0,-2],['ionpro',0,-30]];
 function place(){
  if(!loaded)return;
  const tan=Math.tan(THREE.MathUtils.degToRad(camera.fov/2)),aspect=camera.aspect;
@@ -31,7 +31,7 @@ function place(){
   const el=document.getElementById(id);
   const lonRad=THREE.MathUtils.degToRad(longitude),latRad=THREE.MathUtils.degToRad(latitude);
   const v=new THREE.Vector3(-Math.sin(lonRad)*Math.cos(latRad),Math.sin(latRad),-Math.cos(lonRad)*Math.cos(latRad));
-  v.applyQuaternion(camera.quaternion.clone().invert());
+  camera.updateMatrixWorld();v.applyQuaternion(camera.quaternion.clone().invert());
   if(v.z>=-0.001){el.hidden=true;continue;}
   const nx=(v.x/-v.z)/(tan*aspect),ny=(v.y/-v.z)/tan;
   el.hidden=Math.abs(nx)>1||Math.abs(ny)>1;
