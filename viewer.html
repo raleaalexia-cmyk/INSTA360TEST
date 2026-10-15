@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>360 Photo with Location Pins</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}canvas{display:block;width:100%;height:100%;touch-action:none}
+#pins{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.pin{position:absolute;display:flex;align-items:center;gap:7px;transform:translate(-50%,-100%);padding:0;border:0;background:transparent;color:#fff;font:600 14px/1.2 system-ui,sans-serif;white-space:nowrap;text-shadow:0 1px 4px #000;will-change:left,top}
+.dot{width:14px;height:14px;border:3px solid white;border-radius:50%;background:#25d9bd;box-shadow:0 0 0 3px #0008;flex:none}
+#message{position:fixed;left:12px;bottom:12px;color:#fff;background:#0009;padding:8px 10px;border-radius:8px;font:12px system-ui;pointer-events:none}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="pins">
+ <div class="pin" id="alexia"><span class="dot"></span>Alexia</div>
+ <div class="pin" id="raoul"><span class="dot"></span>Raoul</div>
+ <div class="pin" id="patrick"><span class="dot"></span>Patrick</div>
+ <div class="pin" id="ionpro"><span class="dot"></span>ION PRO</div>
+</div>
+<div id="message">Drag to look around · Scroll to zoom</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+(()=>{
+const canvas=document.querySelector('#view'),message=document.querySelector('#message');
+if(!window.THREE){message.textContent='Viewer library failed to load. Check your internet connection.';return;}
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,1200);
+const geometry=new THREE.SphereGeometry(500,96,64);geometry.scale(-1,1,1);
+const material=new THREE.MeshBasicMaterial({color:0xffffff});
+scene.add(new THREE.Mesh(geometry,material));
+let lon=0,lat=0,fov=75,dragging=false,lastX=0,lastY=0;
+const textureLoader=new THREE.TextureLoader();
+textureLoader.load('./Image%20(30).jpg',texture=>{
+ texture.colorSpace=THREE.SRGBColorSpace;material.map=texture;material.needsUpdate=true;
+},undefined,()=>{message.textContent='Could not load Image (30).jpg from the repository root.';});
+function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+function updateCamera(){lat=Math.max(-85,Math.min(85,lat));camera.fov=fov;camera.rotation.order='YXZ';camera.rotation.set(THREE.MathUtils.degToRad(lat),THREE.MathUtils.degToRad(lon),0);camera.updateProjectionMatrix();camera.updateMatrixWorld(true);}
+// Each pin is a direction in the panorama: longitude, latitude. Change these values to fine-tune locations.
+const locations=[
+ {id:'alexia',lon:-65,lat:-4},
+ {id:'raoul',lon:0,lat:-2},
+ {id:'patrick',lon:65,lat:-4},
+ {id:'ionpro',lon:0,lat:-30}
+];
+function updatePins(){
+ const radius=490;
+ for(const p of locations){
+  const lo=THREE.MathUtils.degToRad(p.lon),la=THREE.MathUtils.degToRad(p.lat);
+  const world=new THREE.Vector3(-Math.sin(lo)*Math.cos(la),Math.sin(la),-Math.cos(lo)*Math.cos(la)).multiplyScalar(radius);
+  const projected=world.project(camera);
+  const el=document.getElementById(p.id);
+  const visible=projected.z<1 && projected.z>-1 && projected.x>=-1.2 && projected.x<=1.2 && projected.y>=-1.2 && projected.y<=1.2 && world.clone().sub(camera.position).dot(new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion))>0;
+  el.style.display=visible?'flex':'none';
+  if(visible){el.style.left=((projected.x+1)*.5*innerWidth)+'px';el.style.top=((1-projected.y)*.5*innerHeight)+'px';}
+ }
+}
+function render(){requestAnimationFrame(render);updateCamera();renderer.render(scene,camera);updatePins();}
+canvas.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{if(!dragging)return;lon+=(e.clientX-lastX)*.12;lat+=(e.clientY-lastY)*.12;lastX=e.clientX;lastY=e.clientY;});
+function stop(){dragging=false;}canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);
+canvas.addEventListener('wheel',e=>{e.preventDefault();fov=Math.max(30,Math.min(100,fov+e.deltaY*.04));},{passive:false});
+window.addEventListener('resize',resize);resize();render();
+})();
+</script>
+</body>
+</html>
