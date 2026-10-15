@@ -121,6 +121,7 @@ footer{text-align:center;color:#737e91;font-size:12px;padding:25px}
  document.getElementById('fullscreen').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else viewer.requestFullscreen&&viewer.requestFullscreen();};
  document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;const s=.1;if(e.key==='ArrowLeft')yaw-=s;else if(e.key==='ArrowRight')yaw+=s;else if(e.key==='ArrowUp')pitch=Math.min(Math.PI/2,pitch+s);else if(e.key==='ArrowDown')pitch=Math.max(-Math.PI/2,pitch-s);else return;render();});
  window.addEventListener('resize',resize);resize();
+ const starter=new Image();starter.crossOrigin='anonymous';starter.onload=()=>{image=starter;empty.hidden=true;status.textContent='Sample panorama · Ready to explore';render();};starter.onerror=()=>{status.textContent='Choose a 360° photo to begin';};starter.src='https://threejs.org/examples/textures/2294472375_24a3b8ef46_o.jpg';
 })();
 </script>
 </body>
