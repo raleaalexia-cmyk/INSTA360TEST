@@ -3,46 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Office 360°</title>
+<title>360° Office</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090b0e;font-family:system-ui,-apple-system,Segoe UI,sans-serif}#view{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}#message{position:fixed;inset:0;display:grid;place-items:center;color:#fff;background:#101318;text-align:center;padding:24px}#message[hidden]{display:none}.notice{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);color:white;background:#111a;border:1px solid #ffffff38;border-radius:24px;padding:8px 13px;font-size:12px;pointer-events:none;opacity:.8;white-space:nowrap}.hotspot{position:fixed;z-index:2;transform:translate(-50%,-50%);border:1px solid #fff;background:#101a;color:white;border-radius:20px;padding:7px 10px;font-size:12px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 14px #0008}.hotspot:before{content:"";display:inline-block;width:7px;height:7px;background:#a8f0dc;border-radius:50%;margin-right:7px}.hotspot[hidden]{display:none}#error{color:#fff;font-size:15px;max-width:440px;line-height:1.5}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}canvas{display:block;width:100%;height:100%;touch-action:none}#error{position:fixed;inset:0;display:none;place-items:center;padding:24px;background:#000;color:white;font:16px system-ui;text-align:center}#points{position:fixed;inset:0;pointer-events:none}.point{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;border:1px solid #fff9;border-radius:22px;background:#111b;color:white;padding:8px 12px;font:13px system-ui;white-space:nowrap;cursor:pointer}.point i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ff5df;margin-right:7px}.point[hidden]{display:none}
 </style>
 </head>
 <body>
-<canvas id="view" aria-label="Interactive 360 degree office photo"></canvas>
-<div id="message" hidden><div id="error">The office photo could not be loaded.</div></div>
-<button class="hotspot" id="p1" hidden>Central workspace</button>
-<button class="hotspot" id="p2" hidden>Left workstation</button>
-<button class="hotspot" id="p3" hidden>Right workstation</button>
-<div class="notice" id="hint">Drag to look around · Scroll to zoom</div>
-<script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-const canvas=document.querySelector('#view'),message=document.querySelector('#message'),error=document.querySelector('#error');
-let renderer,scene,camera,sphere,texture,drag=false,px=0,py=0,lon=0,lat=0,fov=75;
-try{
- renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
- renderer.setPixelRatio(Math.min(devicePixelRatio,2));
- scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(fov,innerWidth/innerHeight,.1,1100);
- const geometry=new THREE.SphereGeometry(500,80,60);geometry.scale(-1,1,1);
- texture=new THREE.TextureLoader().load('./Image%20(30).jpg',()=>{message.hidden=true;document.querySelectorAll('.hotspot').forEach(b=>b.hidden=false);animate();},undefined,()=>{message.hidden=false;error.textContent='Could not load Image (30).jpg. Check that the image is in the repository root and that the filename matches exactly.';});
- texture.colorSpace=THREE.SRGBColorSpace;
- sphere=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({map:texture}));scene.add(sphere);
- function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();positionHotspots();}
- addEventListener('resize',resize);
- function look(){lat=Math.max(-80,Math.min(80,lat));camera.fov=fov;camera.updateProjectionMatrix();camera.rotation.order='YXZ';camera.rotation.y=THREE.MathUtils.degToRad(lon);camera.rotation.x=THREE.MathUtils.degToRad(lat);}
- function animate(){requestAnimationFrame(animate);look();renderer.render(scene,camera);positionHotspots();}
- function positionHotspots(){
-  if(!sphere||!texture||!texture.image)return;
-  const spots=[['p1',0,0],['p2',-48,-8],['p3',48,-8]];
-  for(const [id,l,a] of spots){const v=new THREE.Vector3(-Math.sin(THREE.MathUtils.degToRad(l))*Math.cos(THREE.MathUtils.degToRad(a)),Math.sin(THREE.MathUtils.degToRad(a)), -Math.cos(THREE.MathUtils.degToRad(l))*Math.cos(THREE.MathUtils.degToRad(a)));v.applyEuler(camera.rotation);const el=document.getElementById(id);const visible=v.z<0;el.hidden=!visible;if(visible){const x=(v.x/(-v.z)*.5+.5)*innerWidth,y=(-v.y/(-v.z)*.5+.5)*innerHeight;el.style.left=x+'px';el.style.top=y+'px';}}
- }
- canvas.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId);});
- canvas.addEventListener('pointermove',e=>{if(!drag)return;lon+=(e.clientX-px)*.12;lat+=(e.clientY-py)*.12;px=e.clientX;py=e.clientY;positionHotspots();});
- canvas.addEventListener('pointerup',()=>drag=false);canvas.addEventListener('pointercancel',()=>drag=false);
- canvas.addEventListener('wheel',e=>{e.preventDefault();fov=Math.max(35,Math.min(95,fov+e.deltaY*.035));},{passive:false});
- document.querySelectorAll('.hotspot').forEach((b,i)=>b.addEventListener('click',()=>{lon=[0,-48,48][i];lat=[0,-8,-8][i];}));
- resize();
-}catch(e){message.hidden=false;error.textContent='This browser could not start the 360° viewer. Try opening the page in an updated browser.';console.error(e);}
+<canvas id="c"></canvas><div id="error"></div><div id="points"><button class="point" id="center" hidden><i></i>Central workspace</button><button class="point" id="left" hidden><i></i>Left workstation</button><button class="point" id="right" hidden><i></i>Right workstation</button></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+(()=>{
+const canvas=document.getElementById('c'),err=document.getElementById('error');
+if(!window.THREE){err.style.display='grid';err.textContent='Could not load the 360° viewer. Please refresh when connected to the internet.';return;}
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,1100);
+const geo=new THREE.SphereGeometry(500,80,60);geo.scale(-1,1,1);
+const mat=new THREE.MeshBasicMaterial({color:0xffffff});const sphere=new THREE.Mesh(geo,mat);scene.add(sphere);
+let lon=0,lat=0,fov=75,drag=false,x0=0,y0=0,loaded=false;
+const tex=new THREE.TextureLoader().load('./Image%20(30).jpg',t=>{t.colorSpace=THREE.SRGBColorSpace;mat.map=t;mat.needsUpdate=true;loaded=true;document.querySelectorAll('.point').forEach(e=>e.hidden=false);},undefined,()=>{err.style.display='grid';err.textContent='The image file could not be loaded. Confirm that Image (30).jpg is in the repository root.';});
+function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+function aim(){lat=Math.max(-80,Math.min(80,lat));camera.fov=fov;camera.updateProjectionMatrix();camera.rotation.order='YXZ';camera.rotation.y=THREE.MathUtils.degToRad(lon);camera.rotation.x=THREE.MathUtils.degToRad(lat);}
+const points=[['center',0,0],['left',-45,-8],['right',45,-8]];
+function place(){if(!loaded)return;for(const [id,l,a] of points){const el=document.getElementById(id);const v=new THREE.Vector3(-Math.sin(THREE.MathUtils.degToRad(l))*Math.cos(THREE.MathUtils.degToRad(a)),Math.sin(THREE.MathUtils.degToRad(a)),-Math.cos(THREE.MathUtils.degToRad(l))*Math.cos(THREE.MathUtils.degToRad(a)));v.applyQuaternion(camera.quaternion);if(v.z>=0){el.hidden=true;continue;}el.hidden=false;el.style.left=((v.x/-v.z*.5+.5)*innerWidth)+'px';el.style.top=((-v.y/-v.z*.5+.5)*innerHeight)+'px';}}
+function frame(){requestAnimationFrame(frame);aim();renderer.render(scene,camera);place();}
+canvas.addEventListener('pointerdown',e=>{drag=true;x0=e.clientX;y0=e.clientY;canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;lon+=(e.clientX-x0)*.12;lat+=(e.clientY-y0)*.12;x0=e.clientX;y0=e.clientY;});
+canvas.addEventListener('pointerup',()=>drag=false);canvas.addEventListener('pointercancel',()=>drag=false);
+canvas.addEventListener('wheel',e=>{e.preventDefault();fov=Math.max(35,Math.min(95,fov+e.deltaY*.04));},{passive:false});
+document.getElementById('center').onclick=()=>{lon=0;lat=0;};document.getElementById('left').onclick=()=>{lon=-45;lat=-8;};document.getElementById('right').onclick=()=>{lon=45;lat=-8;};
+addEventListener('resize',resize);resize();frame();
+})();
 </script>
-</body>
-</html>
+</body></html>
