@@ -8,28 +8,19 @@
 <style>
 *{box-sizing:border-box}html,body,#panorama{margin:0;width:100%;height:100%;overflow:hidden;background:#000}
 #panorama{position:fixed;inset:0}
-#tools{position:fixed;z-index:20;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;max-width:96vw;flex-wrap:wrap;justify-content:center;background:#101010c9;padding:8px;border-radius:12px;color:white;font:13px system-ui}
-#tools button{border:1px solid #ffffff55;border-radius:8px;background:#282828;color:white;padding:7px 10px;font:inherit}
-#tools button.active{background:#087f73;border-color:#72f2dd}
+
+
+
 #hint{position:fixed;z-index:20;bottom:12px;left:50%;transform:translateX(-50%);background:#101010c9;color:#fff;padding:8px 12px;border-radius:10px;font:12px system-ui;white-space:nowrap;max-width:96vw}
 .pin-dot{width:14px;height:14px;border-radius:50%;border:3px solid white;background:#25d9bd;box-shadow:0 0 0 3px #0008;display:inline-block;vertical-align:middle;margin-right:6px}
 .pannellum-hotspot{background:#111c!important;border:1px solid #ffffff99!important;border-radius:20px!important;padding:6px 10px!important;color:white!important;font:600 14px system-ui!important;white-space:nowrap!important}
 .pannellum-hotspot .pin-dot{width:11px;height:11px}
-@media(max-width:480px){#tools{top:6px;gap:4px;padding:6px}#tools button{padding:6px 8px;font-size:12px}#hint{font-size:11px;white-space:normal;text-align:center}}
+
 </style>
 </head>
 <body>
 <div id="panorama"></div>
-<div id="tools">
-<span>Place:</span>
-<button data-pin="Alexia" class="active">Alexia</button>
-<button data-pin="Raoul">Raoul</button>
-<button data-pin="Patrick">Patrick</button>
-<button data-pin="ION PRO">ION PRO</button>
-<button id="placeMode">Place pin</button>
-<button id="lock">Finish / lock</button>
-</div>
-<div id="hint">Choose a name, tap “Place pin”, then tap its exact spot in the photo. Rotate normally when placement is off.</div>
+
 <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.js"></script>
 <script>
 (()=>{
