@@ -3,88 +3,77 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>360 Photo with Location Pins</title>
+<title>360 Photo — Pannellum Pins</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.css">
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}canvas{display:block;width:100%;height:100%;touch-action:none}
-#pins{position:fixed;inset:0;pointer-events:none;overflow:hidden}
-.pin{position:absolute;display:flex;align-items:center;gap:7px;transform:translate(-50%,-100%);padding:5px 8px;border:1px solid #ffffff88;border-radius:20px;background:#111b;color:#fff;font:600 14px/1.2 system-ui,sans-serif;white-space:nowrap;text-shadow:0 1px 4px #000;will-change:left,top;pointer-events:auto;touch-action:none;cursor:grab;user-select:none}.pin:active{cursor:grabbing}
-.dot{width:14px;height:14px;border:3px solid white;border-radius:50%;background:#25d9bd;box-shadow:0 0 0 3px #0008;flex:none}
-#message{position:fixed;left:12px;bottom:12px;color:#fff;background:#0009;padding:8px 10px;border-radius:8px;font:12px system-ui;pointer-events:none}
+*{box-sizing:border-box}html,body,#panorama{margin:0;width:100%;height:100%;overflow:hidden;background:#000}
+#panorama{position:fixed;inset:0}
+#tools{position:fixed;z-index:20;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;max-width:96vw;flex-wrap:wrap;justify-content:center;background:#101010c9;padding:8px;border-radius:12px;color:white;font:13px system-ui}
+#tools button{border:1px solid #ffffff55;border-radius:8px;background:#282828;color:white;padding:7px 10px;font:inherit}
+#tools button.active{background:#087f73;border-color:#72f2dd}
+#hint{position:fixed;z-index:20;bottom:12px;left:50%;transform:translateX(-50%);background:#101010c9;color:#fff;padding:8px 12px;border-radius:10px;font:12px system-ui;white-space:nowrap;max-width:96vw}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:3px solid white;background:#25d9bd;box-shadow:0 0 0 3px #0008;display:inline-block;vertical-align:middle;margin-right:6px}
+.pannellum-hotspot{background:#111c!important;border:1px solid #ffffff99!important;border-radius:20px!important;padding:6px 10px!important;color:white!important;font:600 14px system-ui!important;white-space:nowrap!important}
+.pannellum-hotspot .pin-dot{width:11px;height:11px}
+@media(max-width:480px){#tools{top:6px;gap:4px;padding:6px}#tools button{padding:6px 8px;font-size:12px}#hint{font-size:11px;white-space:normal;text-align:center}}
 </style>
 </head>
 <body>
-<canvas id="view"></canvas>
-<div id="pins">
- <div class="pin" id="alexia"><span class="dot"></span>Alexia</div>
- <div class="pin" id="raoul"><span class="dot"></span>Raoul</div>
- <div class="pin" id="patrick"><span class="dot"></span>Patrick</div>
- <div class="pin" id="ionpro"><span class="dot"></span>ION PRO</div>
+<div id="panorama"></div>
+<div id="tools">
+<span>Place:</span>
+<button data-pin="Alexia" class="active">Alexia</button>
+<button data-pin="Raoul">Raoul</button>
+<button data-pin="Patrick">Patrick</button>
+<button data-pin="ION PRO">ION PRO</button>
+<button id="placeMode">Place pin</button>
+<button id="lock">Finish / lock</button>
 </div>
-<div id="message">Drag photo to look around · Drag a pin to move it · Positions stay saved on this device</div>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<div id="hint">Choose a name, tap “Place pin”, then tap its exact spot in the photo. Rotate normally when placement is off.</div>
+<script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.js"></script>
 <script>
 (()=>{
-const canvas=document.querySelector('#view'),message=document.querySelector('#message');
-if(!window.THREE){message.textContent='Viewer library failed to load. Check your internet connection.';return;}
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,1200);
-const geometry=new THREE.SphereGeometry(500,96,64);geometry.scale(-1,1,1);
-const material=new THREE.MeshBasicMaterial({color:0xffffff});
-scene.add(new THREE.Mesh(geometry,material));
-let lon=0,lat=0,fov=75,dragging=false,lastX=0,lastY=0,draggingPin=null;
-const textureLoader=new THREE.TextureLoader();
-textureLoader.load('./Image%20(30).jpg',texture=>{
- texture.colorSpace=THREE.SRGBColorSpace;material.map=texture;material.needsUpdate=true;
-},undefined,()=>{message.textContent='Could not load Image (30).jpg from the repository root.';});
-function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
-function updateCamera(){lat=Math.max(-85,Math.min(85,lat));camera.fov=fov;camera.rotation.order='YXZ';camera.rotation.set(THREE.MathUtils.degToRad(lat),THREE.MathUtils.degToRad(lon),0);camera.updateProjectionMatrix();camera.updateMatrixWorld(true);}
-// Each pin is a direction in the panorama: longitude, latitude. Change these values to fine-tune locations.
-const locations=[
- {id:'alexia',lon:-65,lat:-4},
- {id:'raoul',lon:0,lat:-2},
- {id:'patrick',lon:65,lat:-4},
- {id:'ionpro',lon:0,lat:-30}
+const names=['Alexia','Raoul','Patrick','ION PRO'];
+const ids=['alexia','raoul','patrick','ionpro'];
+const key='pannellum-pins-v1';
+let selected='Alexia',placing=false,viewer=null;
+let spots=[
+ {pitch:-4,yaw:-65},{pitch:-2,yaw:0},{pitch:-4,yaw:65},{pitch:-30,yaw:0}
 ];
-function updatePins(){
- camera.updateMatrixWorld(true);
- for(const p of locations){
-  const lo=THREE.MathUtils.degToRad(p.lon),la=THREE.MathUtils.degToRad(p.lat);
-  const world=new THREE.Vector3(-Math.sin(lo)*Math.cos(la),Math.sin(la),-Math.cos(lo)*Math.cos(la)).multiplyScalar(490);
-  const view=world.clone().applyMatrix4(camera.matrixWorldInverse);
-  const el=document.getElementById(p.id);
-  if(view.z>=0){el.style.display='none';continue;}
-  const projected=world.clone().project(camera);
-  const visible=projected.z>=-1 && projected.z<=1 && projected.x>=-1 && projected.x<=1 && projected.y>=-1 && projected.y<=1;
-  el.style.display=visible?'flex':'none';
-  if(visible){el.style.left=((projected.x+1)*0.5*innerWidth)+'px';el.style.top=((1-projected.y)*0.5*innerHeight)+'px';}
- }
+try{
+ const old=JSON.parse(localStorage.getItem('insta360-pin-locations')||'null');
+ if(Array.isArray(old)){old.forEach(o=>{const i=ids.indexOf(o.id);if(i>=0&&Number.isFinite(o.lon)&&Number.isFinite(o.lat))spots[i]={pitch:o.lat,yaw:o.lon};});}
+ const saved=JSON.parse(localStorage.getItem(key)||'null');
+ if(Array.isArray(saved)&&saved.length===4)spots=saved;
+}catch(e){}
+function htmlFor(name){return '<span class="pin-dot"></span>'+name;}
+function drawSpots(){
+ const config=viewer.getConfig();
+ (config.hotSpots||[]).forEach(h=>viewer.removeHotSpot(h.id));
+ spots.forEach((s,i)=>viewer.addHotSpot({id:ids[i],pitch:s.pitch,yaw:s.yaw,type:'info',text:names[i],cssClass:'pannellum-hotspot',createTooltipFunc:(el)=>{el.innerHTML=htmlFor(names[i]);}}));
 }
-function screenToDirection(clientX,clientY){
- const rect=canvas.getBoundingClientRect();
- const ndc=new THREE.Vector3(((clientX-rect.left)/rect.width)*2-1,-(((clientY-rect.top)/rect.height)*2-1),0.5);
- ndc.unproject(camera);
- return ndc.sub(camera.position).normalize();
-}
-function directionToAngles(dir){
- return {lon:THREE.MathUtils.radToDeg(Math.atan2(-dir.x,-dir.z)),lat:THREE.MathUtils.radToDeg(Math.asin(THREE.MathUtils.clamp(dir.y,-1,1)))};
-}
-for(const p of locations){
- const el=document.getElementById(p.id);
- el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();draggingPin=p;el.setPointerCapture(e.pointerId);});
- el.addEventListener('pointermove',e=>{if(draggingPin!==p)return;e.preventDefault();const dir=screenToDirection(e.clientX,e.clientY);const a=directionToAngles(dir);p.lon=a.lon;p.lat=a.lat;});
- el.addEventListener('pointerup',()=>{if(draggingPin===p){draggingPin=null;saveLocations();}});
- el.addEventListener('pointercancel',()=>{if(draggingPin===p){draggingPin=null;saveLocations();}});
-}
-function saveLocations(){try{localStorage.setItem('insta360-pin-locations',JSON.stringify(locations));}catch(e){}}
-try{const saved=JSON.parse(localStorage.getItem('insta360-pin-locations')||'null');if(Array.isArray(saved)){for(const p of locations){const s=saved.find(x=>x.id===p.id);if(s&&Number.isFinite(s.lon)&&Number.isFinite(s.lat)){p.lon=s.lon;p.lat=s.lat;}}}}catch(e){}
-function render(){requestAnimationFrame(render);updateCamera();renderer.render(scene,camera);updatePins();}
-canvas.addEventListener('pointerdown',e=>{if(draggingPin)return;dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener('pointermove',e=>{if(!dragging||draggingPin)return;lon+=(e.clientX-lastX)*.12;lat+=(e.clientY-lastY)*.12;lastX=e.clientX;lastY=e.clientY;});
-function stop(){dragging=false;}canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);
-canvas.addEventListener('wheel',e=>{e.preventDefault();fov=Math.max(30,Math.min(100,fov+e.deltaY*.04));},{passive:false});
-window.addEventListener('resize',resize);resize();render();
+viewer=pannellum.viewer('panorama',{
+ type:'equirectangular',panorama:'./Image%20(30).jpg',autoLoad:true,
+ showControls:false,showFullscreenCtrl:false,keyboardZoom:true,mouseZoom:true,
+ pitch:0,yaw:0,hfov:100,hotSpotDebug:false,escapeHTML:true,hotSpots:[]
+});
+viewer.on('load',drawSpots);
+function save(){try{localStorage.setItem(key,JSON.stringify(spots));localStorage.setItem('insta360-pin-locations',JSON.stringify(spots.map((s,i)=>({id:ids[i],lon:s.yaw,lat:s.pitch}))));}catch(e){}}
+document.querySelectorAll('[data-pin]').forEach(btn=>btn.addEventListener('click',()=>{selected=btn.dataset.pin;document.querySelectorAll('[data-pin]').forEach(b=>b.classList.toggle('active',b===btn));document.getElementById('hint').textContent='Selected '+selected+'. Tap “Place pin”, then tap the exact spot in the panorama.';}));
+document.getElementById('placeMode').addEventListener('click',()=>{
+ placing=!placing;document.getElementById('placeMode').classList.toggle('active',placing);
+ document.getElementById('placeMode').textContent=placing?'Tap photo…':'Place pin';
+ document.getElementById('hint').textContent=placing?'Tap the exact location for '+selected+'.':'Placement off. Drag to look around.';
+});
+document.getElementById('panorama').addEventListener('click',e=>{
+ if(!placing||!viewer)return;
+ const coords=viewer.mouseEventToCoords(e);
+ const i=names.indexOf(selected);if(i<0||!coords)return;
+ spots[i]={pitch:coords[0],yaw:coords[1]};save();drawSpots();placing=false;
+ document.getElementById('placeMode').classList.remove('active');document.getElementById('placeMode').textContent='Place pin';
+ document.getElementById('hint').textContent=selected+' saved to this location. Choose another name to place its pin.';
+});
+document.getElementById('lock').addEventListener('click',()=>{placing=false;save();document.getElementById('placeMode').classList.remove('active');document.getElementById('placeMode').textContent='Place pin';document.getElementById('hint').textContent='Pins saved and locked to the panorama. To adjust one, select its name and place it again.';});
 })();
 </script>
 </body>
