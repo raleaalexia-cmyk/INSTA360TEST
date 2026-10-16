@@ -36,7 +36,7 @@
 const names=['Alexia','Raoul','Patrick','ION PRO'];
 const ids=['alexia','raoul','patrick','ionpro'];
 const key='pannellum-pins-v1';
-let selected='Alexia',placing=false,viewer=null;
+let viewer=null;
 let spots=[
  {pitch:-4,yaw:-65},{pitch:-2,yaw:0},{pitch:-4,yaw:65},{pitch:-30,yaw:0}
 ];
@@ -59,21 +59,7 @@ viewer=pannellum.viewer('panorama',{
 });
 viewer.on('load',drawSpots);
 function save(){try{localStorage.setItem(key,JSON.stringify(spots));localStorage.setItem('insta360-pin-locations',JSON.stringify(spots.map((s,i)=>({id:ids[i],lon:s.yaw,lat:s.pitch}))));}catch(e){}}
-document.querySelectorAll('[data-pin]').forEach(btn=>btn.addEventListener('click',()=>{selected=btn.dataset.pin;placing=true;document.querySelectorAll('[data-pin]').forEach(b=>b.classList.toggle('active',b===btn));document.getElementById('placeMode').classList.add('active');document.getElementById('placeMode').textContent='Tap photo…';document.getElementById('hint').textContent='Now tap the exact spot in the panorama to move '+selected+'.';}));
-document.getElementById('placeMode').addEventListener('click',()=>{
- placing=!placing;document.getElementById('placeMode').classList.toggle('active',placing);
- document.getElementById('placeMode').textContent=placing?'Tap photo…':'Place pin';
- document.getElementById('hint').textContent=placing?'Tap the exact location for '+selected+'.':'Placement off. Drag to look around.';
-});
-document.getElementById('panorama').addEventListener('click',e=>{
- if(!placing||!viewer)return;
- const coords=viewer.mouseEventToCoords(e);
- const i=names.indexOf(selected);if(i<0||!coords)return;
- spots[i]={pitch:coords[0],yaw:coords[1]};save();drawSpots();placing=false;
- document.getElementById('placeMode').classList.remove('active');document.getElementById('placeMode').textContent='Place pin';
- document.getElementById('hint').textContent=selected+' saved to this location. Choose another name to place its pin.';
-});
-document.getElementById('lock').addEventListener('click',()=>{placing=false;save();document.getElementById('placeMode').classList.remove('active');document.getElementById('placeMode').textContent='Place pin';document.getElementById('hint').textContent='Pins saved and locked to the panorama. To adjust one, select its name and place it again.';});
+
 })();
 </script>
 </body>
