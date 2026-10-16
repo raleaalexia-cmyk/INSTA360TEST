@@ -59,7 +59,7 @@ viewer=pannellum.viewer('panorama',{
 });
 viewer.on('load',drawSpots);
 function save(){try{localStorage.setItem(key,JSON.stringify(spots));localStorage.setItem('insta360-pin-locations',JSON.stringify(spots.map((s,i)=>({id:ids[i],lon:s.yaw,lat:s.pitch}))));}catch(e){}}
-document.querySelectorAll('[data-pin]').forEach(btn=>btn.addEventListener('click',()=>{selected=btn.dataset.pin;document.querySelectorAll('[data-pin]').forEach(b=>b.classList.toggle('active',b===btn));document.getElementById('hint').textContent='Selected '+selected+'. Tap “Place pin”, then tap the exact spot in the panorama.';}));
+document.querySelectorAll('[data-pin]').forEach(btn=>btn.addEventListener('click',()=>{selected=btn.dataset.pin;placing=true;document.querySelectorAll('[data-pin]').forEach(b=>b.classList.toggle('active',b===btn));document.getElementById('placeMode').classList.add('active');document.getElementById('placeMode').textContent='Tap photo…';document.getElementById('hint').textContent='Now tap the exact spot in the panorama to move '+selected+'.';}));
 document.getElementById('placeMode').addEventListener('click',()=>{
  placing=!placing;document.getElementById('placeMode').classList.toggle('active',placing);
  document.getElementById('placeMode').textContent=placing?'Tap photo…':'Place pin';
